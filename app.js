@@ -151,7 +151,18 @@ const DEFAULT_TAGS = {
   other: ["General","Personal","Ideas","Tasks"]
 };
 function tagsKey(){ return TAGS_KEY_NS + (localStorage.getItem(ROLE_KEY) || "other"); }
-function loadTags(){ return JSON.parse(localStorage.getItem(tagsKey())) || DEFAULT_TAGS[localStorage.getItem(ROLE_KEY) || "other"]; }
+function loadTags(){
+  const role = localStorage.getItem(ROLE_KEY) || "other";
+  const fallback = Array.isArray(DEFAULT_TAGS[role]) ? [...DEFAULT_TAGS[role]] : [];
+  try {
+    const raw = localStorage.getItem(tagsKey());
+    if(!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
 function saveTags(arr){ localStorage.setItem(tagsKey(), JSON.stringify(arr)); }
 function initTagDropdowns(){
   const tags = loadTags();
@@ -685,7 +696,10 @@ function blobToDataURL(blob){ return new Promise(r=>{ const fr=new FileReader();
 applyRole.addEventListener("click", ()=>{
   const val = roleChange.value || "other";
   localStorage.setItem(ROLE_KEY, val);
-  saveTags(DEFAULT_TAGS[val]); initTagDropdowns(); alert("Role applied");
+  const preset = Array.isArray(DEFAULT_TAGS[val]) ? [...DEFAULT_TAGS[val]] : [];
+  saveTags(preset);
+  initTagDropdowns();
+  alert("Role applied");
 });
 addTagBtn.addEventListener("click", ()=>{
   const t = newTagInput.value.trim(); if(!t) return;
