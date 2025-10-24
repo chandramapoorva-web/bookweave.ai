@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Book Weave — Offline. Private. Yours.</title>
+  <!-- Google AdSense Script Added -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9180537637925365"
+     crossorigin="anonymous"></script>
+  <style>
+    /* ===== Theme (neon blue/cyan, 3 cards) ===== */
+    :root{
+      --bg:#071427; --panel:#0c1e38; --panel2:#0f2747; --ink:#dff3ff; --muted:#9ec3da;
+      --glow1:#18c1ff; --glow2:#6de1ff; --accent:#6ee7ff; --accent-ink:#022a35; --brd:rgba(255,255,255,.08);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--ink);
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(32,126,210,.25), transparent),
+        radial-gradient(900px 500px at 110% 10%, rgba(24,193,255,.18), transparent),
+        linear-gradient(180deg,#071427,#0a1b33 60%, #08142a);
+    }
+
+    /* Header */
+    .hero{display:flex; gap:12px; align-items:center; justify-content:space-between; padding:20px 24px; position:sticky; top:0; z-index:5; backdrop-filter:blur(8px); background:linear-gradient(180deg, rgba(9,20,40,.75), rgba(9,20,40,.45)); border-bottom:1px solid var(--brd)}
+    .brand{display:flex; gap:12px; align-items:center}
+    .logo{width:28px; height:28px; display:grid; place-items:center; color:#001; border-radius:8px; background:linear-gradient(135deg, var(--glow1), var(--glow2)); box-shadow:0 0 24px rgba(24,193,255,.6)}
+    .title{margin:0; font-weight:900; letter-spacing:.2px}
+    .title span{color:var(--glow1)}
+    .tagline{margin:0; color:var(--muted); font-size:12px}
+
+    .btn{background:linear-gradient(135deg, var(--glow1), var(--glow2)); color:#02222b; font-weight:800; border:none; padding:10px 14px; border-radius:999px; cursor:pointer}
+    .btn.ghost{background:rgba(255,255,255,.06); color:var(--ink); border:1px solid var(--brd)}
+
+    /* 3-up grid */
+    .grid{max-width:1200px; margin:26px auto; padding:0 16px; display:grid; grid-template-columns:repeat(3, 1fr); gap:18px}
+    @media (max-width:1000px){ .grid{grid-template-columns:1fr} }
+
+    .card{background:linear-gradient(180deg, var(--panel), var(--panel2)); border:1px solid var(--brd); border-radius:18px; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.35), 0 0 40px rgba(24,193,255,.08) inset}
+    .card h2{margin:0 0 12px 0; font-size:16px; font-weight:800}
+
+    /* Left card (record) */
+    .mic{display:grid; place-items:center; height:180px; margin:8px 0 14px; border-radius:16px; background:radial-gradient(120px 80px at 50% 20%, rgba(109,225,255,.16), transparent), rgba(255,255,255,.02); border:1px solid var(--brd)}
+    .mic svg{filter:drop-shadow(0 0 18px rgba(109,225,255,.65))}
+    .recbar{display:flex; gap:10px; align-items:center; justify-content:center}
+    .rec-dot{width:12px; height:12px; border-radius:999px; background:#ff4d6d; box-shadow:0 0 16px rgba(255,77,109,.9)}
+    .hint{font-size:12px; color:var(--muted); text-align:center; margin-top:8px}
+
+    /* Middle card (editor) */
+    .titleRow{display:flex; gap:8px}
+    input, textarea, select{width:100%; background:#0a1a31; color:var(--ink); border:1px solid var(--brd); border-radius:14px; padding:12px}
+    textarea{resize:vertical}
+    .saveRow{display:flex; justify-content:space-between; gap:10px; margin-top:10px}
+
+    /* Right card (export) */
+    .exportBtns{display:grid; gap:10px; margin-top:8px}
+    .exportBtns .btn{border-radius:14px; text-align:left; display:flex; align-items:center; gap:10px}
+    .exportBtns .icon{width:26px; height:26px; display:grid; place-items:center; border-radius:8px; background:rgba(255,255,255,.12)}
+
+    .stats{color:var(--muted); font-size:12px; margin:10px 0}
+
+    .foot{padding:18px; text-align:center; color:var(--muted); font-size:12px}
+    .foot a{color:var(--glow1); text-decoration:none; margin:0 8px}
+
+    /* Modal */
+    .modal{position:fixed; inset:0; display:none; place-items:center; background:rgba(5,10,20,.65); backdrop-filter:blur(4px); z-index:50}
+    .modal.show{display:grid}
+    .sheet{width:min(900px, 92vw); background:linear-gradient(180deg, var(--panel), var(--panel2)); border:1px solid var(--brd); border-radius:18px; padding:16px}
+    .sheet h3{margin:0 0 10px 0}
+    .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .list{margin-top:10px; max-height:55vh; overflow:auto; display:flex; flex-direction:column; gap:8px}
+    .item{background:#0a1a31; border:1px solid var(--brd); border-radius:12px; padding:10px}
+    .item .meta{font-size:12px; color:var(--muted)}
+    .tools{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17c3-2 5-8 7-8s3 6 5 6 3-4 6-4" stroke="#002a3a" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <h1 class="title">Book <span>Weave</span></h1>
+        <p class="tagline">Offline. Private. Yours.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="grid">
+    <!-- Left: Record -->
+    <section class="card">
+      <h2>Record</h2>
+      <div class="mic">
+        <svg width="72" height="72" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z" stroke="white" stroke-opacity=".9" stroke-width="1.5"/>
+          <path d="M5 11a7 7 0 0 0 14 0" stroke="white" stroke-opacity=".6" stroke-width="1.5"/>
+          <path d="M12 18v3" stroke="white" stroke-opacity=".6" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="recbar">
+        <button id="recBtn" class="btn" aria-label="Start recording"><span id="recText">Start Recording</span></button>
+        <button id="stopBtn" class="btn ghost">Stop</button>
+        <span class="rec-dot" id="recDot" title="live" style="opacity:.2"></span>
+      </div>
+      <div class="hint" id="recHint">Real‑time speech‑to‑text. You can also type in the editor.</div>
+    </section>
+
+    <!-- Middle: Editor -->
+    <section class="card">
+      <h2>Editor</h2>
+      <div class="titleRow">
+        <input id="entryTitle" placeholder="Optional title" />
+      </div>
+      <textarea id="entryBody" rows="12" placeholder="Speak or type here..."></textarea>
+      <div class="saveRow">
+        <button id="saveEntry" class="btn">Save Entry</button>
+        <button id="openEntries" class="btn ghost" title="View saved entries">Entries</button>
+      </div>
+      <div class="stats" id="countStats">Words in compiled manuscript: 0</div>
+    </section>
+
+    <!-- Right: Export -->
+    <section class="card">
+      <h2>Export</h2>
+      <p class="hint">Compile all entries, review below, then export.</p>
+      <div class="exportBtns">
+        <button id="compileAll" class="btn"><span class="icon">📘</span>Compile All</button>
+        <button id="downloadTxt" class="btn ghost"><span class="icon">📄</span>.TXT</button>
+        <button id="downloadPdf" class="btn ghost"><span class="icon">🧾</span>.PDF</button>
+        <button id="downloadEpub" class="btn ghost"><span class="icon">📚</span>.EPUB</button>
+      </div>
+      <textarea id="manuscript" rows="10" placeholder="Compiled manuscript appears here..."></textarea>
+      <div id="libBanner" class="hint" style="display:none"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <a href="#" id="aboutLink">About</a>•
+    <a href="#" id="contactLink">Contact</a>•
+    <a href="#" id="privacyLink">Privacy</a>
+  </footer>
+
+  <!-- Modal: Entries -->
+  <div id="entriesModal" class="modal" aria-hidden="true">
+    <div class="sheet">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px">
+        <h3>Saved Entries</h3>
+        <div class="row">
+          <input id="searchBox" placeholder="Search..." />
+          <select id="sortOrder">
+            <option value="desc">Newest first</option>
+            <option value="asc">Oldest first</option>
+          </select>
+          <button id="closeEntries" class="btn ghost">Close</button>
+        </div>
+      </div>
+      <div id="entriesList" class="list"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Info (About/Contact/Privacy) -->
+  <div id="infoModal" class="modal" aria-hidden="true">
+    <div class="sheet">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px">
+        <h3 id="infoTitle">About</h3>
+        <button id="infoClose" class="btn ghost">Close</button>
+      </div>
+      <div id="infoBody" class="list" style="max-height:60vh"></div>
+    </div>
+  </div>
+
+  <!-- Client-side export libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <script>
+    /* ===== State & Storage ===== */
+    const STORE_KEY = "bookweave_entries_v1";
+    function loadEntries(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY))||[]; }catch{ return []; } }
+    function saveEntries(arr){ localStorage.setItem(STORE_KEY, JSON.stringify(arr)); }
+    let entries = loadEntries();
+
+    /* ===== Elements ===== */
+    const entriesModal = document.getElementById('entriesModal');
+    const openEntries = document.getElementById('openEntries');
+    const closeEntries = document.getElementById('closeEntries');
+
+    const recBtn = document.getElementById('recBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const recDot = document.getElementById('recDot');
+    const recText = document.getElementById('recText');
+    const recHint = document.getElementById('recHint');
+
+    const entryBody = document.getElementById('entryBody');
+    const entryTitle = document.getElementById('entryTitle');
+    const saveEntryBtn = document.getElementById('saveEntry');
+
+    const searchBox = document.getElementById('searchBox');
+    const sortOrder = document.getElementById('sortOrder');
+    const entriesList = document.getElementById('entriesList');
+
+    const compileAll = document.getElementById('compileAll');
+    const manuscript = document.getElementById('manuscript');
+    const countStats = document.getElementById('countStats');
+
+    const downloadTxt = document.getElementById('downloadTxt');
+    const downloadPdf = document.getElementById('downloadPdf');
+    const downloadEpub = document.getElementById('downloadEpub');
+
+    const libBanner = document.getElementById('libBanner');
+
+    // Info modal
+    const infoModal = document.getElementById('infoModal');
+    const infoTitle = document.getElementById('infoTitle');
+    const infoBody = document.getElementById('infoBody');
+    const infoClose = document.getElementById('infoClose');
+    const aboutLink = document.getElementById('aboutLink');
+    const contactLink = document.getElementById('contactLink');
+    const privacyLink = document.getElementById('privacyLink');
+
+    /* ===== Utilities ===== */
+    function fmtDate(ts){ const d=new Date(ts); return d.toLocaleString(); }
+    function escapeHtml(s){ return (s||"").replace(/[&<>\"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+    function wordCount(s){ return (s||"").trim().split(/\s+/).filter(Boolean).length; }
+    function showLib(msg){ libBanner.textContent = msg; libBanner.style.display='block'; setTimeout(()=> libBanner.style.display='none', 4000); }
+
+    /* ===== Modal handling ===== */
+    openEntries.addEventListener('click', ()=> entriesModal.classList.add('show'));
+    closeEntries.addEventListener('click', ()=> entriesModal.classList.remove('show'));
+    entriesModal.addEventListener('click', (e)=>{ if(e.target===entriesModal) entriesModal.classList.remove('show'); });
+
+    function openInfo(title, html){ infoTitle.textContent = title; infoBody.innerHTML = html; infoModal.classList.add('show'); }
+    infoClose.addEventListener('click', ()=> infoModal.classList.remove('show'));
+    infoModal.addEventListener('click', (e)=>{ if(e.target===infoModal) infoModal.classList.remove('show'); });
+
+    aboutLink.addEventListener('click', (e)=>{ e.preventDefault(); openInfo('About BookWeave', `
+      <div class="item">
+        <p><strong>BookWeave</strong> is an offline-first writing workspace that turns voice and notes into a manuscript—privately, on your device.</p>
+        <p>It’s built for focused creators (writers, journalists, students, professors) who want a friction-free, one-page app to capture thoughts, organize them, and export a clean draft—without accounts, trackers, or servers.</p>
+        <p><strong>What BookWeave does:</strong></p>
+        <ul>
+          <li><em>Capture fast:</em> Speak or type entries; optional timestamps and speaker marks.</li>
+          <li><em>Keep it local:</em> Everything is saved in your browser’s storage on this device.</li>
+          <li><em>Organize simply:</em> Give entries an optional title.</li>
+          <li><em>Compile in one click:</em> Merge all entries.</li>
+          <li><em>Export anywhere:</em> Download your work as TXT, PDF, or EPUB.</li>
+        </ul>
+        <p>The idea is simple: your words, your device, your control.<br/>Created by <strong>Apoorva Chandram (Mr.)</strong> as a privacy-centric tool for drafting books, reports, or research notes—especially when you want the speed of speech with the safety of local-only storage.</p>
+      </div>
+    `); });
+
+    contactLink.addEventListener('click', (e)=>{ e.preventDefault(); openInfo('Contact', `
+      <div class="item"><p>Write to <a href="mailto:apoorva.chandram@yahoo.com">apoorva.chandram@yahoo.com</a> with feedback, ideas, or stories.</p></div>
+    `); });
+
+    privacyLink.addEventListener('click', (e)=>{ e.preventDefault(); openInfo('Privacy', `
+      <div class="item">
+        <p>BookWeave runs completely in your browser. Your text and audio do not leave your device. There are no accounts, no trackers, and no third-party cookies.</p>
+        <p>Microphone access (if you enable it) is used only for speech-to-text within the app and is never uploaded to any server.</p>
+      </div>
+    `); });
+
+    /* ===== Entries list (modal) ===== */
+    function renderList(){
+      const q=(searchBox.value||"").toLowerCase();
+      const order=sortOrder.value;
+      let arr = entries
+        .filter(e=>((e.title||"")+" "+(e.body||"")).toLowerCase().includes(q))
+        .sort((a,b)=> order==='desc' ? b.createdAt-a.createdAt : a.createdAt-b.createdAt);
+      entriesList.innerHTML = arr.length? "" : '<div class="hint">No entries yet</div>';
+      for(const e of arr){
+        const card = document.createElement('div');
+        card.className = 'item';
+        card.innerHTML = `
+          <div class="title">${escapeHtml(e.title||'Untitled entry')}</div>
+          <div class="meta">${fmtDate(e.createdAt)}</div>
+          <div>${escapeHtml((e.body||'').slice(0,280))}${(e.body||'').length>280?' …':''}</div>
+          <div class="tools">
+            <button class="btn ghost" data-id="${e.id}" data-act="open">Edit</button>
+            <button class="btn ghost" data-id="${e.id}" data-act="delete">Delete</button>
+          </div>`;
+        entriesList.appendChild(card);
+      }
+    }
+    searchBox.addEventListener('input', renderList);
+    sortOrder.addEventListener('change', renderList);
+
+    entriesList.addEventListener('click', (ev)=>{
+      const btn = ev.target.closest('button'); if(!btn) return;
+      const id = btn.dataset.id; const act = btn.dataset.act;
+      if(act==='delete'){ if(confirm('Delete this entry?')){ entries=entries.filter(x=>x.id!==id); saveEntries(entries); renderList(); } }
+      if(act==='open'){ const it = entries.find(x=>x.id===id); if(!it) return; entryTitle.value=it.title||''; entryBody.value=it.body||''; entryBody.dataset.editing=id; entriesModal.classList.remove('show'); window.scrollTo({ top:0, behavior:'smooth' }); }
+    });
+
+    /* ===== Save entry ===== */
+    saveEntryBtn.addEventListener('click', ()=>{
+      const body=(entryBody.value||'').trim(); if(!body){ alert('Please type or record something first'); return; }
+      const now = Date.now();
+      const payload = { id: crypto.randomUUID(), title:(entryTitle.value||'').trim(), body, createdAt: now };
+      if(entryBody.dataset.editing){
+        const idx = entries.findIndex(x=>x.id===entryBody.dataset.editing);
+        if(idx>-1){ entries[idx] = { ...entries[idx], title:payload.title, body:payload.body }; }
+        entryBody.removeAttribute('data-editing');
+      } else {
+        entries.push(payload);
+      }
+      saveEntries(entries);
+      entryTitle.value=''; entryBody.value='';
+      renderList();
+    });
+
+    /* ===== Compile ===== */
+    function buildCompiled(arr){
+      return arr.map(e=>{
+        const t = e.title?`\n${e.title}\n`:'';
+        return `[${fmtDate(e.createdAt)}]\n${t}${e.body}\n\n---\n`;
+      }).join('');
+    }
+    function updateCounts(){ countStats.textContent = `Words in compiled manuscript: ${wordCount(manuscript.value)}`; }
+    function runCompile(){ manuscript.value = buildCompiled(entries); updateCounts(); }
+    compileAll.addEventListener('click', runCompile);
+    manuscript.addEventListener('input', updateCounts);
+
+    /* ===== Exports ===== */
+    function today(){ return new Date().toISOString().slice(0,10); }
+    downloadTxt.addEventListener('click', ()=>{
+      const blob = new Blob([manuscript.value||''], {type:'text/plain;charset=utf-8'});
+      saveAs(blob, `BookWeave_${today()}.txt`);
+    });
+
+    // === PDF EXPORT FIX START ===
+    // Replaced the original function to handle multi-page PDFs
+    downloadPdf.addEventListener('click', ()=>{
+      const { jsPDF } = window.jspdf || {};
+      if(!jsPDF){ showLib('PDF library failed to load.'); return; }
+      
+      const doc = new jsPDF();
+      const manuscriptText = manuscript.value || '';
+      const margin = 15; // Page margin (left/right)
+      const topMargin = 20; // Page margin (top)
+      const bottomMargin = 20; // Page margin (bottom)
+      
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
+      const usableWidth = pageWidth - (margin * 2);
+      
+      doc.setFontSize(12);
+      
+      // Estimate line height for 12pt font. (12pt * 1.15) / (72pts/inch) * (25.4mm/inch) ~= 5.2mm
+      // Using a slightly rounded value for safety.
+      const lineHeight = 5.5; 
+
+      const lines = doc.splitTextToSize(manuscriptText, usableWidth);
+      let y = topMargin; // Start at the top margin
+      
+      for (let i = 0; i < lines.length; i++) {
+        // Check if adding *this* line would overflow the page
+        if (y > pageHeight - bottomMargin) {
+          doc.addPage(); // Add a new page
+          y = topMargin; // Reset y to the top margin
+        }
+        
+        doc.text(lines[i], margin, y);
+        y += lineHeight; // Move to the next line's position
+      }
+      
+      doc.save(`BookWeave_${today()}.pdf`);
+    });
+    // === PDF EXPORT FIX END ===
+
+    downloadEpub.addEventListener('click', async ()=>{
+      if(!window.JSZip){ showLib('EPUB library failed to load.'); return; }
+      const zip = new JSZip();
+      zip.file('mimetype','application/epub+zip',{compression:'STORE'});
+      zip.file('META-INF/container.xml',
+`<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>`);
+      const content = (manuscript.value||'')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/\"/g,'&quot;').replace(/'/g,'&apos;');
+      zip.file('OEBPS/content.xhtml',
+`<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>BookWeave</title></head><body><pre>${content}</pre></body></html>`);
+      zip.file('OEBPS/content.opf',
+`<?xml version="1.0" encoding="UTF-8"?>
+<package version="3.0" unique-identifier="BookId" xmlns="http://www.idpf.org/2007/opf">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>BookWeave</dc:title></metadata>
+  <manifest><item id="c1" href="content.xhtml" media-type="application/xhtml+xml"/></manifest>
+  <spine><itemref idref="c1"/></spine>
+</package>`);
+      const blob = await zip.generateAsync({type:'blob'});
+      saveAs(blob, `BookWeave_${today()}.epub`);
+    });
+
+    /* ===== Speech Recognition ===== */
+    let listening=false, recog=null, accumulated='';
+    function hasSpeech(){ return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window; }
+    function makeRecognizer(){
+      const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const r = new R(); r.lang = navigator.language || 'en-US'; r.interimResults = true; r.continuous = true;
+      r.onresult = ev => { let interim=''; for(let i=ev.resultIndex;i<ev.results.length;i++){ const res = ev.results[i]; if(res.isFinal){ accumulated += res[0].transcript + ' '; } else { interim += res[0].transcript; } } entryBody.value = accumulated + interim; };
+      r.onstart = ()=> setLive(true); r.onend = ()=> setLive(false); r.onerror = ()=> setLive(false); return r;
+    }
+    function setLive(on){ listening=on; recDot.style.opacity = on? '1' : '.2'; recText.textContent = on? 'Listening…' : 'Start Recording'; recHint.textContent = on? 'Speak at a normal pace' : 'Real‑time speech‑to‑text. You can also type in the editor.'; }
+    recBtn.addEventListener('click', ()=>{ if(!hasSpeech()){ alert('Speech recognition is not available in this browser.'); return; } if(listening) return; accumulated = entryBody.value || ''; try{ recog = makeRecognizer(); recog.start(); }catch{} });
+    stopBtn.addEventListener('click', ()=>{ if(recog){ try{ recog.stop(); }catch{} } });
+
+    /* ===== Init ===== */
+    function init(){ renderList(); updateCounts(); }
+    init();
+  </script>
+</body>
+</html>
+
